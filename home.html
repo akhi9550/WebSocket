@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Chat System</title>
+    <script type="text/javascript">
+        window.onload = function () {
+            let conn;
+            const msg = document.getElementById("msg");
+            const log = document.getElementById("log");
+
+            function appendLog(message, isSender = false) {
+                const item = document.createElement("div");
+                item.className = isSender ? "message sender" : "message receiver";
+                item.innerText = message;
+                log.appendChild(item);
+                log.scrollTop = log.scrollHeight;
+            }
+
+            document.getElementById("form").onsubmit = function () {
+                if (conn && msg.value) {
+                    appendLog(msg.value, true);  // Append the sender's message
+                    conn.send(JSON.stringify({ sender: true, message: msg.value })); 
+                    msg.value = "";
+                }
+                return false;
+            };
+
+            if (window["WebSocket"]) {
+                conn = new WebSocket("ws://" + document.location.host + "/ws");
+
+                conn.onclose = () => appendLog("Connection closed.", true);
+
+                conn.onmessage = (evt) => {
+                    const data = JSON.parse(evt.data); 
+                    appendLog(data.message, data.sender === false);  // Append the receiver's message
+                };
+            } else {
+                appendLog("Your browser does not support WebSockets.", true);
+            }
+        };
+    </script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: #eae6df; 
+        }
+
+        #chat-container {
+            width: 90%;
+            max-width: 400px;
+            height: 90%;
+            max-height: 600px;
+            display: flex;
+            flex-direction: column;
+            border: 1px solid #cccccc;
+            background: #ffffff;
+            border-radius: 10px; 
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        #log {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            background: #efeae2; 
+        }
+
+        .message {
+            max-width: 75%;
+            margin: 5px 10px;
+            padding: 10px;
+            font-size: 14px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            border-radius: 10px;
+        }
+
+        .message.sender {
+            margin-left: auto;
+            background: #dcf8c6; 
+            border-radius: 10px 10px 0px 10px;
+        }
+
+        .message.receiver {
+            margin-right: auto;
+            background: #ffffff;
+            border: 1px solid #d9d9d9;
+            border-radius: 10px 10px 10px 0px;
+        }
+
+        #form {
+            display: flex;
+            gap: 10px;
+            padding: 10px;
+            background: #ffffff;
+            border-top: 1px solid #cccccc;
+        }
+
+        #msg {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #cccccc;
+            border-radius: 20px;
+            font-size: 14px;
+        }
+
+        #msg:focus {
+            outline: none;
+            border-color: #25d366; /* WhatsApp green */
+        }
+
+        input[type="submit"] {
+            background: #25d366;
+            color: #ffffff;
+            border: none;
+            padding: 10px 14px;
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        input[type="submit"]:hover {
+            background: #20b557;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="log"></div>
+        <form id="form">
+            <input type="text" id="msg" placeholder="Type a message..." autofocus autocomplete="off" />
+            <input type="submit" value="Send" />
+        </form>
+    </div>
+</body>
+</html>
+
