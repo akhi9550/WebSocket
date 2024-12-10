@@ -7,8 +7,10 @@
             let conn;
             const msg = document.getElementById("msg");
             const log = document.getElementById("log");
+            const senderID = Math.random().toString(36).substring(7);
 
-            function appendLog(message, isSender = false) {
+
+            function appendLog(message, isSender) {
                 const item = document.createElement("div");
                 item.className = isSender ? "message sender" : "message receiver";
                 item.innerText = message;
@@ -16,23 +18,42 @@
                 log.scrollTop = log.scrollHeight;
             }
 
+
             document.getElementById("form").onsubmit = function () {
                 if (conn && msg.value) {
-                    appendLog(msg.value, true);  // Append the sender's message
-                    conn.send(JSON.stringify({ sender: true, message: msg.value })); 
+                    const message = {
+                        senderID: senderID,
+                        message: msg.value,
+                    };
+
+
+                    conn.send(JSON.stringify(message));
+
+
+                    appendLog(msg.value, true);
+
+
                     msg.value = "";
                 }
                 return false;
             };
 
+
             if (window["WebSocket"]) {
                 conn = new WebSocket("ws://" + document.location.host + "/ws");
 
+
                 conn.onclose = () => appendLog("Connection closed.", true);
 
+
                 conn.onmessage = (evt) => {
-                    const data = JSON.parse(evt.data); 
-                    appendLog(data.message, data.sender === false);  // Append the receiver's message
+                    const data = JSON.parse(evt.data);
+
+
+                    // Only append messages not sent by the current sender
+                    if (data.senderID !== senderID) {
+                        appendLog(data.message, false);
+                    }
                 };
             } else {
                 appendLog("Your browser does not support WebSockets.", true);
@@ -48,8 +69,9 @@
             justify-content: center;
             align-items: center;
             height: 100vh;
-            background: #eae6df; 
+            background: #eae6df;
         }
+
 
         #chat-container {
             width: 90%;
@@ -60,17 +82,19 @@
             flex-direction: column;
             border: 1px solid #cccccc;
             background: #ffffff;
-            border-radius: 10px; 
+            border-radius: 10px;
             box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
             overflow: hidden;
         }
+
 
         #log {
             flex: 1;
             padding: 10px;
             overflow-y: auto;
-            background: #efeae2; 
+            background: #efeae2;
         }
+
 
         .message {
             max-width: 75%;
@@ -82,18 +106,21 @@
             border-radius: 10px;
         }
 
+
         .message.sender {
             margin-left: auto;
-            background: #dcf8c6; 
-            border-radius: 10px 10px 0px 10px;
+            background: #dcf8c6;
+            border-radius: 10px 10px 0 10px;
         }
+
 
         .message.receiver {
             margin-right: auto;
             background: #ffffff;
             border: 1px solid #d9d9d9;
-            border-radius: 10px 10px 10px 0px;
+            border-radius: 10px 10px 10px 0;
         }
+
 
         #form {
             display: flex;
@@ -103,6 +130,7 @@
             border-top: 1px solid #cccccc;
         }
 
+
         #msg {
             flex: 1;
             padding: 8px;
@@ -111,10 +139,12 @@
             font-size: 14px;
         }
 
+
         #msg:focus {
             outline: none;
-            border-color: #25d366; /* WhatsApp green */
+            border-color: #25d366;
         }
+
 
         input[type="submit"] {
             background: #25d366;
@@ -126,6 +156,7 @@
             font-size: 14px;
             font-weight: bold;
         }
+
 
         input[type="submit"]:hover {
             background: #20b557;
@@ -142,4 +173,3 @@
     </div>
 </body>
 </html>
-
